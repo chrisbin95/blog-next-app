@@ -1,0 +1,116 @@
+import { ArticleLayout } from '@/components/ArticleLayout'
+
+export const meta = {
+  author: 'Alex P. Gates',
+  date: '2023-05-11',
+  title: 'Connecting Redash Docker Container to a Remote MySQL Database on EC2 using SSH Tunnel',
+  description:
+    'Use an SSH tunnel to MySql with Redash.',
+}
+
+export default (props) => <ArticleLayout meta={meta} {...props} />
+
+I've been experimenting with various Business Intelligence tools recently and wanted to try [Redash](https://redash.io/). I have a MySQL database on a Laravel Forge-provisioned server that I'd like to use. However, the server only allows connections via SSH, and Redash doesn't provide built-in SSH tunneling for MySQL connections. So, I had to do a few things to get this set up properly.
+
+### Overview
+
+- Ensure the public key from the Redash EC2 instance is added to the remote MySQL server
+- Find the Docker host IP address on the Redash EC2 instance
+- Create the SSH tunnel using the Docker host IP address
+- Verify the connection to the MySQL database via the command line
+- Configure Redash's MySQL data source with the Docker host IP address and local port
+- Test the connection in Redash
+- Set up a persistent SSH tunnel to automatically start on EC2 instance reboot
+
+
+## Ensure the public key from the Redash EC2 instance is added to the remote MySQL server
+
+Use `ssh-keygen` to create a public key on the Rddash EC2 instance. Then add it to your remote MySQL server.
+
+
+## Find the Docker host IP address on the Redash EC2 instance
+
+To find the Docker host IP address on the Redash EC2 instance, run the following command:
+
+```
+docker network inspect bridge
+```
+
+Look for the "Gateway" key under the "IPAM" section in the output. This is your Docker host IP address. By default it is usually `172.17.0.1` but it is worth double checking.
+
+
+## Create the SSH tunnel using the Docker host IP address
+
+To create the SSH tunnel, run the following command:
+
+```
+ssh -N -L 3389:DOCKER_HOST_IP:3306 USERNAME@REMOTE_IP
+```
+
+Replace "DOCKER_HOST_IP" with the Docker host IP address found in the previous step, "USERNAME" with the username for the remote server, and "REMOTE_IP" with the IP address of the remote MySQL server.
+
+
+## Verify the connection to the MySQL database via the command line
+
+To verify the connection, run the following command:
+
+```
+mysql -h 127.0.0.1 -P 3389 -u MYSQL_USER -p
+```
+
+Replace "MYSQL_USER" with your MySQL username. You will be prompted to enter your MySQL password. If you arrive at your remote server's MySql command prompt, the tunnel is working.
+
+
+## Configure Redash's MySQL data source with the Docker host IP address and local port
+
+In the Redash setup screen, add a new MySQL data source with the following values:
+
+- Host: (your Docker host IP address)
+- Port: 3389
+- User: (your MySQL username)
+- Password: (your MySQL password)
+- Database name: (your MySQL database name)
+
+## Test the connection in Redash
+
+Click on the "Test Connection" button in Redash to verify that it can connect to the MySQL database using the specified details.
+
+## Set up a persistent SSH tunnel to automatically start on EC2 instance reboot (Ubuntu)
+
+To ensure the SSH tunnel is always running, even after an EC2 instance reboot, you can add the SSH tunnel command to the instance's startup scripts. Since the default Redash AMI uses Ubuntu, you can use systemd to create a service that automatically starts the SSH tunnel. Here's a basic example:
+
+1. Create a new systemd service file:
+
+```
+sudo nano /etc/systemd/system/ssh-tunnel.service
+```
+
+2. Add the following content to the service file:
+
+```
+[Unit]
+Description=SSH tunnel service
+After=network.target
+
+[Service]
+User=ubuntu
+ExecStart=/usr/bin/ssh -N -L DOCKER_HOST_IP:3389:127.0.0.1:3306 USERNAME@REMOTE_IP
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Remember to replace "DOCKER_HOST_IP", "USERNAME", and "REMOTE_IP" with the appropriate values.
+
+3. Save the file and exit the text editor.
+
+4. Enable and start the new service:
+
+```
+sudo systemctl enable ssh-tunnel.service
+sudo systemctl start ssh-tunnel.service
+```
+
+After making these changes, the SSH tunnel should automatically start whenever the EC2 instance boots up.
+
+Big thanks for [Faizar Septiawan](https://sibunglon.com/)'s post [Redash on Docker Connect to Database Over SSH Tunnel](https://sibunglon.com/2021/05/15/redash-on-docker-connect-to-database-over-ssh-tunnel/) for getting me going in the right direction.

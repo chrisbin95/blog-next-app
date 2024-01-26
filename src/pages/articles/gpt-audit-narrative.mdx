@@ -1,0 +1,368 @@
+import { ArticleLayout } from '@/components/ArticleLayout'
+
+export const meta = {
+  author: 'Alex P. Gates',
+  date: '2023-05-04',
+  title: 'Narrating Eloquent model audit events with GPT-4',
+  description:
+    'GPT-4 gives new life to your Eloquent model audits.',
+}
+
+export default (props) => <ArticleLayout meta={meta} {...props} />
+
+I'm using [owen-it/laravel-auditing](https://github.com/owen-it/laravel-auditing) on PunchClock, a task management and time tracking app I'm tinkering with. Like other times I've added auditing packages, I just wanted to store a record of when things changed *just in case* I happened to want to look through what happened with a certain model.
+
+Model audit records have definitely come in handy quite a few times over the years, but combing through them manually has always been time-consuming.
+
+## Using GPT-4 to narrate model audits
+
+GPT-4 has the capability to make parsing audit data *significantly* easier by providing a narrative of the events.
+
+Take this example audit data from a timer. It's a lot to parse.
+
+```json
+[{
+	"id": 388,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "created",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": [],
+	"new_values": {
+		"id": 80,
+		"key": "1-YeRf1",
+		"user_id": 1
+	},
+	"url": "https:\/\/punchclock.test\/timers\/create",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T20:56:48.000000Z",
+	"updated_at": "2023-05-03T20:56:48.000000Z"
+}, {
+	"id": 389,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"project_id": null
+	},
+	"new_values": {
+		"project_id": 2
+	},
+	"url": "https:\/\/punchclock.test\/api\/timers\/80",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T20:57:07.000000Z",
+	"updated_at": "2023-05-03T20:57:07.000000Z"
+}, {
+	"id": 390,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"notes": null
+	},
+	"new_values": {
+		"notes": "<p>git init!<\/p>"
+	},
+	"url": "https:\/\/punchclock.test\/timers\/80\/notes",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T20:57:25.000000Z",
+	"updated_at": "2023-05-03T20:57:25.000000Z"
+}, {
+	"id": 391,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"running": 0,
+		"started_at": null
+	},
+	"new_values": {
+		"running": true,
+		"started_at": "2023-05-03 20:57:27"
+	},
+	"url": "https:\/\/punchclock.test\/timers\/80\/start",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T20:57:27.000000Z",
+	"updated_at": "2023-05-03T20:57:27.000000Z"
+}, {
+	"id": 392,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"running": 1,
+		"elapsed_seconds": 0
+	},
+	"new_values": {
+		"running": false,
+		"elapsed_seconds": 1482
+	},
+	"url": "https:\/\/punchclock.test\/timers\/80\/stop",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T21:22:09.000000Z",
+	"updated_at": "2023-05-03T21:22:09.000000Z"
+}, {
+	"id": 393,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"notes": "<p>git init!<\/p>"
+	},
+	"new_values": {
+		"notes": "<p>git init!<\/p><p>bedrock setup.<\/p><p>Next: get radical in the bedrock project. <\/p>"
+	},
+	"url": "https:\/\/punchclock.test\/timers\/80\/notes",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T21:22:29.000000Z",
+	"updated_at": "2023-05-03T21:22:29.000000Z"
+}, {
+	"id": 399,
+	"user_type": "App\\Models\\User",
+	"user_id": 1,
+	"event": "updated",
+	"auditable_type": "App\\Models\\Timer",
+	"auditable_id": 80,
+	"old_values": {
+		"running": 0,
+		"started_at": "2023-05-03 20:57:27"
+	},
+	"new_values": {
+		"running": true,
+		"started_at": "2023-05-03 21:48:51"
+	},
+	"url": "https:\/\/punchclock.test\/timers\/80\/start",
+	"ip_address": "123.456.789",
+	"user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/112.0.0.0 Safari\/537.36",
+	"tags": null,
+	"created_at": "2023-05-03T21:48:51.000000Z",
+	"updated_at": "2023-05-03T21:48:51.000000Z"
+}, {
+    "id": 400,
+    "user_type": "App\\Models\\User",
+    "user_id": 1,
+    "event": "updated",
+    "auditable_type": "App\\Models\\Timer",
+    "auditable_id": 80,
+    "old_values": {
+      "running": 1,
+      "elapsed_seconds": 1482
+    },
+    "new_values": {
+      "running": false,
+      "elapsed_seconds": 4670
+    },
+    "url": "https://punchclock.fun/timers/80/stop",
+    "ip_address": "68.13.57.35",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+    "tags": null,
+    "created_at": "2023-05-03T22:41:59.000000Z",
+    "updated_at": "2023-05-03T22:41:59.000000Z"
+  },
+  {
+    "id": 401,
+    "user_type": "App\\Models\\User",
+    "user_id": 1,
+    "event": "updated",
+    "auditable_type": "App\\Models\\Timer",
+    "auditable_id": 80,
+    "old_values": {
+      "notes": "<p>git init!</p><p>bedrock setup.</p><p>Next: get radical in the bedrock project. </p>"
+    },
+    "new_values": {
+      "notes": "<p>git init!</p><p>Radical setup</p><p>Flowbite support + learnin'</p>"
+    },
+    "url": "https://punchclock.fun/timers/80/notes",
+    "ip_address": "68.13.57.35",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+    "tags": null,
+    "created_at": "2023-05-03T22:49:16.000000Z",
+    "updated_at": "2023-05-03T22:49:16.000000Z"
+  },
+  {
+    "id": 402,
+    "user_type": "App\\Models\\User",
+    "user_id": 1,
+    "event": "updated",
+    "auditable_type": "App\\Models\\Timer",
+    "auditable_id": 80,
+    "old_values": {
+      "running": 0,
+      "started_at": "2023-05-03 21:48:51"
+    },
+    "new_values": {
+      "running": true,
+      "started_at": "2023-05-03 22:49:20"
+    },
+    "url": "https://punchclock.fun/timers/80/start",
+    "ip_address": "68.13.57.35",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+    "tags": null,
+    "created_at": "2023-05-03T22:49:20.000000Z",
+    "updated_at": "2023-05-03T22:49:20.000000Z"
+  },
+  {
+    "id": 403,
+    "user_type": "App\\Models\\User",
+    "user_id": 1,
+    "event": "updated",
+    "auditable_type": "App\\Models\\Timer",
+    "auditable_id": 80,
+    "old_values": {
+      "running": 1,
+      "elapsed_seconds": 4670
+    },
+    "new_values": {
+      "running": false,
+      "elapsed_seconds": 6565
+    },
+    "url": "https://punchclock.fun/timers/80/stop",
+    "ip_address": "68.13.57.35",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+    "tags": null,
+    "created_at": "2023-05-03T23:20:55.000000Z",
+    "updated_at": "2023-05-03T23:20:55.000000Z"
+  }]
+```
+
+I wasn't kidding. It's *a lot* to comb through.
+
+With GPT-4, the audit data can be narrated like this:
+
+>On May 3, 2023, at 3:56 PM Central Time, a timer with the key "1-YeRf1" was created. Shortly after, at 3:57 PM, the timer was assigned to the project "FunNewClientProject.com v1" with no associated client. It took 11 minutes from creating the timer to start working on the project.
+
+>The first work session began at 3:57 PM, with a note added at the same time, stating "git init!". After 24 minutes, at 4:22 PM, the work session concluded with 1,482 elapsed seconds. Meanwhile, an additional note was added, declaring the completion of "bedrock setup" and the next task being to "get radical in the bedrock project."
+
+>The second work session began at 4:48 PM, lasting for 53 minutes, and concluded at 5:42 PM with 4,670 elapsed seconds. During this session, a note was added, mentioning the progress on the "Radical setup.”
+
+>Finally, at 5:49 PM, the third work session began, and a note was added regarding "Flowbite support + learnin'." This session continued for 31 minutes, ending at 6:21 PM, with a total of 6,565 elapsed seconds recorded.
+
+>The timer was finalized on May 4, 2023, at 8:16 AM Central Time, with a total recorded time of 1 hour, 49 minutes, and 25 seconds spent on the FunNewClientProject.com v1 project.
+
+
+As you can see, GPT-4 transforms the raw audit data into an easy-to-understand narrative, making it simpler to analyze the changes and events that occurred.
+
+## Using OpenAI with Laravel
+
+Here's the job (and prompt) I used with [openai-php/laravel](https://github.com/openai-php/laravel) to narrate the audit events.
+
+```php
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Timer;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use OpenAI\Laravel\Facades\OpenAI;
+
+class ParseTimerEvents implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timer;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct(Timer $timer)
+    {
+        $this->timer = $timer;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $timer = $this->timer;
+
+        $timer->load([
+            'project' => function ($query) {
+                $query->select('id', 'name');
+            },
+            'project.client' => function ($query) {
+                $query->select('id', 'name');
+            },
+            'audits' => function ($query) use ($timer) {
+                $query->select('auditable_id', 'event', 'old_values', 'new_values', 'created_at')
+                    ->where('auditable_type', 'App\Models\Timer')
+                    ->where('auditable_id', $timer->id);
+            },
+        ]);
+
+        $timerJson = $timer->toJson();
+
+        $response = OpenAI::chat()->create([
+            'model' => 'gpt-4',
+            'messages' => [
+                ['role' => 'system', 'content' => 'You are an expert at recounting events narratively when provided structured model event data.'],
+                ['role' => 'user', 'content' => $this->createPrompt() . $timerJson],
+            ],
+        ]);
+
+        if ($response) {
+            $message_content = $response->choices[0]->message->content;
+            $timer->update(['narrative' => $message_content]);
+        } else {
+            logger('No response from OpenAI');
+        }
+    }
+
+    public function createPrompt()
+    {
+        $prompt = 'Create a narrative summarizing the events of a timer with the following information: timer key, creation time, project assignment with associated client, timer start and stop times, notes added over time with their respective timestamps, and the time between events. Please include the project and client names instead of their IDs and highlight the time difference between each significant event in the narrative. Times are in UTC, but should be converted to Central Time.';
+        return $prompt;
+    }
+}
+```
+
+Note that I made an effort to trim as much unnecessary stuff from the data while still providing enough data for the response to use project and client names instead of IDs. Without this I'd definitely exceed the token limit.
+
+```php
+$timer->load([
+    'project' => function ($query) {
+        $query->select('id', 'name');
+    },
+    'project.client' => function ($query) {
+        $query->select('id', 'name');
+    },
+    'audits' => function ($query) use ($timer) {
+        $query->select('auditable_id', 'event', 'old_values', 'new_values', 'created_at')
+            ->where('auditable_type', 'App\Models\Timer')
+            ->where('auditable_id', $timer->id);
+    },
+]);
+```
+
+As for the prompt itself, I'm sure it could be much better. I've added it to my project as-is and will keep experimenting with the prompt language.

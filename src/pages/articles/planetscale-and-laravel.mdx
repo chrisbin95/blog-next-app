@@ -1,0 +1,63 @@
+import { ArticleLayout } from '@/components/ArticleLayout'
+
+export const meta = {
+  author: 'Alex P. Gates',
+  date: '2023-01-06',
+  title: 'Using PlanetScale with Laravel',
+  description:
+    'PlanetScale is a neat MySQL-compatible serverless database that seems to work really nicely with Laravel.',
+}
+
+export default (props) => <ArticleLayout meta={meta} {...props} />
+
+[PlanetScale](https://planetscale.com)  is a neat MySQL-compatible serverless database that seems to work really nicely with Laravel.
+
+Here are a few things I ran in to while setting up a recent project.
+
+
+## .env
+
+The `MYSQL_ATTR_SSL_CA` .env variable in the connection instructions for a Laravel app work well on my local machine running [Valet](https://laravel.com/docs/9.x/valet).
+
+To get it working on a [Forge](https://forge.laravel.com)-provisioned production server, I used:
+
+`MYSQL_ATTR_SSL_CA=/etc/ssl/certs/ca-certificates.crt`
+
+
+## Promoting to Production
+
+When attempting to promote my PlanetScale branch database to production, I ran into this:
+
+`Table “password_resets” has no unique key: all tables must have at least one unique, not-null key.`
+
+Since this is a new project, I just updated my `password_resets` migration by adding `$table->id();`
+
+```PHP
+Schema::create('password_resets', function (Blueprint $table) {
+    $table->id();
+    $table->string('email')->index();
+    $table->string('token');
+    $table->timestamp('created_at')->nullable();
+});
+```
+
+## The workflow
+
+Make sure you understand the concepts of [the PlanetScale workflow](https://planetscale.com/docs/concepts/planetscale-workflow). Also review the [Laravel-specific stuff](https://planetscale.com/blog/zero-downtime-laravel-migrations) - it's super helpful.
+
+### Do not run migrations on your production server
+
+> Just to recap, **you can still use Laravel migrations to modify your schema, but you should only run them on your application's dev environment**. Your dev environment will be connected to your PlanetScale development branch, so the migrations will run on your PlanetScale development database and can be safely merged into production when ready.
+
+> **Do not run them on your production server.** Your production server is connected to your main production PlanetScale database, so PlanetScale is already handling it for you when you deploy your PS dev branch to production.
+
+via (https://planetscale.com/blog/zero-downtime-laravel-migrations)[https://planetscale.com/blog/zero-downtime-laravel-migrations]
+
+
+On Forge, I removed this in my deploy script:
+
+```BASH
+if [ -f artisan ]; then
+    $FORGE_PHP artisan migrate --force
+fi
+```
