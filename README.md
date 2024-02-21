@@ -1,3 +1,3 @@
-## blog-next-app
-## blog website link
-# - vercel [https://blog-next-app-delta.vercel.app/]
+# blog-next-app
+## Website link
+### - [blog-next-app-delta.vercel.app](https://blog-next-app-delta.vercel.app/)
