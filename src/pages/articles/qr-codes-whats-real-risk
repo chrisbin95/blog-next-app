@@ -1,0 +1,31 @@
+import { ArticleLayout } from '@/components/ArticleLayout'
+
+export const meta = {
+  author: 'ncsc.gov.uk',
+  date: '2024-08-02',
+  title: 'QR Codes - what's the real risk?',
+  description:
+    'Cybersecurity Blogs: QR Codes - Real Risk - ncsc',
+}
+
+export default (props) => <ArticleLayout meta={meta} {...props} />
+## How safe is it to scan that QR code in the pub? Or in that email?
+
+QR codes have been around since the 90s and they are widely used for things like quickly directing users to websites, logging into devices that lack keyboards (such as online video services on smart devices, apps), or ordering or paying for goods and services.
+Reports on QR enabled frauds are less compared to cyber fruads. The chances for these frauds are more commonly found in public places such as parking spaces, stations, pubs etc. There lies an element of reverse social engineering in these attempts to decept its victims.
+
+However, QR codes are increasingly being used in phishing emails (a technique sometimes called ‘quishing’). From the criminal's perspective, using QR codes in this way makes sense, for a number of reasons.
+
+- Most people are now suspicious of dubious-looking links in emails, and are (correctly) cautious of clicking on shortened links. Criminals are therefore using QR codes to disguise the links to malicious websites that phishing emails contain.
+- Not all security tools designed to detect phishing emails will scan images, so a QR code directing the user to a malicious website might slip through.
+- Users are more likely to use their personal phone to scan the QR code. Personal devices may not have the same security protections as a computer that’s provided by your employer.
+
+To summarise:
+
+- The QR codes used in pubs or restaurants are probably safe for you to scan.
+- Scanning QR codes in open spaces (like stations and car parks) might be riskier. As with many cyber attacks, you should be suspicious if you’re asked to provide what feels like too much information, whether that’s on a website or in any follow-up communications (such as a phone call).
+- If you receive an email with a QR code in it, and you’re asked to scan it, you should exercise caution as the NCSC is seeing an increase in these types of ‘quishing’ attacks.
+
+Finally, we recommend that you use the QR-scanner that comes with your phone, rather than using an app downloaded from an app store. For more detailed information, you can refer to the (https://www.getcybersafe.gc.ca/en/blogs/how-use-qr-codes-safely)
+
+#### via (https://www.ncsc.gov.uk/blog-post/qr-codes-whats-real-risk)[https://www.ncsc.gov.uk/blog-post/qr-codes-whats-real-risk]
